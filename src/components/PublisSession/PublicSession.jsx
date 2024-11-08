@@ -241,7 +241,7 @@ function PublicSession() {
         <div className={(classes.container, classes.formdsd)}>
           {!sessionStarted ? (
             <div className={classes.container}>
-              <div className={classes.rowsMain}>
+              <div className={classes.rowsMaindsd}>
                 <p className={classes.DsDSDS}>
                   Waiting for the session to start...
                 </p>
