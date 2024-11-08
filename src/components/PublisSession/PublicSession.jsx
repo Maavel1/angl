@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../base/firebase";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, get } from "firebase/database";
 
 function PublicSession() {
   const [playerName, setPlayerName] = useState("");
@@ -13,7 +13,10 @@ function PublicSession() {
   const [timer, setTimer] = useState(25);
   const [participantsCount, setParticipantsCount] = useState(0);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [answerSubmitted, setAnswerSubmitted] = useState(false); // Новый флаг
+  const [answerSubmitted, setAnswerSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const [ranking, setRanking] = useState([]); // Состояние для рейтинга
+  const [showRankingScreen, setShowRankingScreen] = useState(false); // Показ экрана рейтинга
 
   useEffect(() => {
     if (sessionCode) {
@@ -27,6 +30,12 @@ function PublicSession() {
       onValue(participantsRef, (snapshot) => {
         const data = snapshot.val();
         setParticipantsCount(data ? Object.keys(data).length : 0);
+        if (data) {
+          const sortedRanking = Object.entries(data)
+            .map(([name, info]) => ({ name, score: info.score || 0 }))
+            .sort((a, b) => b.score - a.score);
+          setRanking(sortedRanking);
+        }
       });
 
       const sessionStatusRef = ref(db, `sessions/${sessionCode}/isActive`);
@@ -37,53 +46,88 @@ function PublicSession() {
   }, [sessionCode]);
 
   useEffect(() => {
-    if (sessionStarted && currentQuestionIndex < questions.length) {
+    if (
+      sessionStarted &&
+      currentQuestionIndex < questions.length &&
+      !showRankingScreen
+    ) {
       const countdown = setInterval(() => {
         setTimer((prev) => {
           if (prev === 1) {
-            // Таймер истек: переходим к следующему вопросу
-            handleNextQuestion();
+            // Показать таблицу на 10 секунд вместо следующего вопроса
+            setShowRankingScreen(true);
             clearInterval(countdown);
-            return 25; // Сброс таймера для следующего вопроса
+            return 25;
           }
           return prev - 1;
         });
       }, 1000);
       return () => clearInterval(countdown);
     }
-  }, [sessionStarted, currentQuestionIndex, questions.length, answerSubmitted]);
+  }, [
+    sessionStarted,
+    currentQuestionIndex,
+    questions.length,
+    answerSubmitted,
+    showRankingScreen,
+  ]);
 
-  const joinSession = () => {
-    if (sessionCode && playerName) {
-      const participantRef = ref(
-        db,
-        `sessions/${sessionCode}/participants/${playerName}`
-      );
-      update(participantRef, { score: 0 });
-      setJoined(true);
+  useEffect(() => {
+    if (showRankingScreen) {
+      const rankingTimeout = setTimeout(() => {
+        setShowRankingScreen(false); // Скрыть таблицу после 10 секунд и перейти к следующему вопросу
+        handleNextQuestion();
+      }, 10000);
+      return () => clearTimeout(rankingTimeout);
     }
-  };
+  }, [showRankingScreen]);
 
-  const submitAnswer = () => {
-    if (!answerSubmitted) {
-      const correctAnswer = questions[currentQuestionIndex].correctAnswer;
-      if (selectedAnswer === correctAnswer) {
-        setScore((prev) => prev + 1);
+  const joinSession = async () => {
+    if (sessionCode && playerName) {
+      const sessionRef = ref(db, `sessions/${sessionCode}`);
+      const sessionSnapshot = await get(sessionRef);
+
+      if (sessionSnapshot.exists()) {
         const participantRef = ref(
           db,
           `sessions/${sessionCode}/participants/${playerName}`
         );
-        update(participantRef, { score: score + 1 });
+        update(participantRef, { score: 0 });
+        setJoined(true);
+        setError("");
+      } else {
+        setError("Session does not exist.");
       }
-      setAnswerSubmitted(true); // Фиксируем ответ
+    }
+  };
+
+  const submitAnswer = async () => {
+    if (!answerSubmitted) {
+      const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+
+      // Проверяем, что выбранный ответ соответствует правильному
+      if (selectedAnswer === correctAnswer) {
+        const newScore = score + 3; // Вычисляем новый счёт локально
+        setScore(newScore); // Обновляем состояние (это асинхронно)
+
+        // Обновляем счёт в базе данных, сразу используя newScore
+        const participantRef = ref(
+          db,
+          `sessions/${sessionCode}/participants/${playerName}`
+        );
+        await update(participantRef, { score: newScore }); // Обновляем с новым значением
+
+        console.log("Score updated in database:", newScore); // Для отладки
+      }
+      setAnswerSubmitted(true);
     }
   };
 
   const handleNextQuestion = () => {
     setCurrentQuestionIndex((prev) => prev + 1);
     setSelectedAnswer(null);
-    setAnswerSubmitted(false); // Сбрасываем флаг ответа
-    setTimer(25); // Сброс таймера для следующего вопроса
+    setAnswerSubmitted(false);
+    setTimer(25);
   };
 
   return (
@@ -101,6 +145,7 @@ function PublicSession() {
             onChange={(e) => setSessionCode(e.target.value)}
           />
           <button onClick={joinSession}>Join Session</button>
+          {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
       ) : (
         <div>
@@ -110,27 +155,74 @@ function PublicSession() {
               <p>Participants: {participantsCount}</p>
             </div>
           ) : currentQuestionIndex < questions.length ? (
-            <div>
-              <div>Question: {questions[currentQuestionIndex].question}</div>
-              {questions[currentQuestionIndex].answers.map((answer, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedAnswer(answer)}
-                  style={{
-                    backgroundColor:
-                      selectedAnswer === answer ? "lightblue" : "white",
-                  }}
-                >
-                  {answer}
+            showRankingScreen ? (
+              // Экран рейтинга
+              <div>
+                <h3>Leaderboard</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((participant, idx) => (
+                      <tr key={idx}>
+                        <td>{participant.name}</td>
+                        <td>{participant.score}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p>Next question will appear shortly...</p>
+              </div>
+            ) : (
+              // Экран вопроса
+              <div>
+                <div>Question: {questions[currentQuestionIndex].question}</div>
+                {questions[currentQuestionIndex].answers.map((answer, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedAnswer(answer)}
+                    style={{
+                      backgroundColor:
+                        selectedAnswer === answer ? "lightblue" : "white",
+                    }}
+                  >
+                    {answer}
+                  </button>
+                ))}
+                <p>Time remaining: {timer} seconds</p>
+                <button onClick={submitAnswer} disabled={answerSubmitted}>
+                  Submit Answer
                 </button>
-              ))}
-              <p>Time remaining: {timer} seconds</p>
-              <button onClick={submitAnswer} disabled={answerSubmitted}>
-                Submit Answer
-              </button>
-            </div>
+              </div>
+            )
           ) : (
-            <div>Quiz Finished! Your score: {score}</div>
+            // Финальная таблица рейтинга после завершения всех вопросов
+            <div>
+              <div>Quiz Finished! Your score: {score}</div>
+              <div>
+                <h3>Final Leaderboard</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranking.map((participant, idx) => (
+                      <tr key={idx}>
+                        <td>{participant.name}</td>
+                        <td>{participant.score}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -20,10 +20,10 @@ function AdminPanel() {
     });
   };
 
-  // Функция для добавления вопроса в текущую сессию
   const addQuestion = () => {
     const questionsRef = ref(db, `sessions/${sessionCode}/questions`);
     const newQuestionRef = push(questionsRef);
+    console.log("Adding question:", { question, answers, correctAnswer }); // Логируем перед добавлением
     set(newQuestionRef, {
       question: question,
       answers: answers,

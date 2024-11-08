@@ -1,17 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import AdminPanel from "./components/AdminPanel/AdminPanel";
 import PublicSession from "./components/PublisSession/PublicSession";
+import { BrowserRouter, Route, Router, Routes } from "react-router-dom";
 
 function App() {
-  const [isAdmin, setIsAdmin] = useState(false);
-
   return (
-    <div>
-      <button onClick={() => setIsAdmin(!isAdmin)}>
-        {isAdmin ? "Switch to Public" : "Switch to Admin"}
-      </button>
-      {isAdmin ? <AdminPanel /> : <PublicSession />}
-    </div>
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<PublicSession />} />
+          <Route path="/adminPanel" element={<AdminPanel />} />
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 
