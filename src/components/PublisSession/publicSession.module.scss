@@ -1,0 +1,94 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.rowsMain {
+  width: 70%;
+  max-width: 500px;
+}
+
+.rowsForm {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 300px;
+}
+
+.rowsMaindsd {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+}
+
+.RowsFormMain {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  h1 {
+    text-align: center;
+    color: #9054f8;
+  }
+}
+
+.DsDSDS {
+  font-size: 20px;
+  color: #9054f8;
+  span {
+    color: white;
+  }
+}
+
+.questionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background-color: #9054f8;
+  border-radius: 20px;
+  padding: 45px;
+}
+
+.questionFormRows {
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 90vh;
+  color: rgb(255, 255, 255);
+  padding: 0px 10px;
+}
+
+.formdsd {
+  display: flex;
+  justify-content: center;
+  padding: 35px 0px;
+}
+
+.Question {
+  font-size: 18px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.timer {
+  p {
+    margin: 10px 0px;
+  }
+}
+
+.titleLeaderboard {
+  color: #9054f8;
+  font-size: 22px;
+  margin: 15px 0px 5px;
+  text-align: center;
+}
+
+.decrTitleLeaderboard {
+  font-size: 15px;
+  color: #b1b1b1;
+  text-align: center;
+  margin-bottom: 15px;
+}
