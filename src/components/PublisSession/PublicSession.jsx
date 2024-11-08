@@ -276,9 +276,11 @@ function PublicSession() {
                       <button
                         key={idx}
                         onClick={() => handleSelectAnswer(idx)}
-                        className={
-                          selectedAnswerIndex === idx ? "selected" : ""
-                        }
+                        className={`${
+                          selectedAnswerIndex === idx
+                            ? "selected selectedAnswer"
+                            : ""
+                        }`}
                         disabled={answerSubmitted}
                       >
                         {answer}

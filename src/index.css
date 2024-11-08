@@ -80,3 +80,25 @@ button:focus-visible {
 .third-place {
   background-color: #ffd2a5;
 }
+
+.selected {
+  background-color: #adf67a;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+.selectedAnswer {
+  animation: pulse 0.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
