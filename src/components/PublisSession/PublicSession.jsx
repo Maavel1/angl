@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../base/firebase";
 import { ref, onValue, update, get } from "firebase/database";
-import { Input, Table } from "antd"; // Импортируем Table из Ant Design
+import { Input, Table } from "antd";
 import classes from "./publicSession.module.scss";
 
 function PublicSession() {
@@ -25,7 +25,7 @@ function PublicSession() {
       title: "Place",
       dataIndex: "place",
       key: "place",
-      render: (text) => `#${text}`, // Форматирование места (например, #1, #2)
+      render: (text) => `#${text}`,
     },
     {
       title: "Name",
@@ -68,13 +68,12 @@ function PublicSession() {
             setCurrentQuestionIndex(data.currentQuestionIndex);
           }
 
-          // Создаем рейтинг с местами
           const sortedRanking = Object.entries(data.participants || {})
             .map(([name, info]) => ({ name, score: info.score || 0 }))
             .sort((a, b) => b.score - a.score)
             .map((participant, index) => ({
               ...participant,
-              place: index + 1, // Присваиваем место участнику
+              place: index + 1,
             }));
 
           setRanking(sortedRanking);
@@ -94,8 +93,8 @@ function PublicSession() {
       const countdown = setInterval(() => {
         setTimer((prev) => {
           if (prev === 1) {
-            setShowRankingScreen(true);
             clearInterval(countdown);
+            setShowRankingScreen(true);
             return 25;
           }
           return prev - 1;
@@ -203,7 +202,6 @@ function PublicSession() {
     }
   };
 
-  // Функция для изменения цвета строк в таблице
   const getRowClassName = (record) => {
     if (record.place === 1) return "first-place";
     if (record.place === 2) return "second-place";
@@ -260,9 +258,9 @@ function PublicSession() {
                 <Table
                   columns={columns}
                   dataSource={ranking}
-                  rowKey="name" // Уникальный ключ для строк
-                  pagination={false} // Отключить пагинацию, если не нужна
-                  rowClassName={getRowClassName} // Применяем стили к строкам
+                  rowKey="name"
+                  pagination={false}
+                  rowClassName={getRowClassName}
                 />
               </div>
             ) : (
@@ -306,7 +304,7 @@ function PublicSession() {
                 dataSource={ranking}
                 rowKey="name"
                 pagination={false}
-                rowClassName={getRowClassName} // Применяем стили к строкам
+                rowClassName={getRowClassName}
               />
             </div>
           )}
