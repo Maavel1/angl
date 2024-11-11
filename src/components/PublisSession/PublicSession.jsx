@@ -231,6 +231,7 @@ function PublicSession() {
                 />
                 {error && <p style={{ color: "red" }}>{error}</p>}
                 <button onClick={joinSession}>Join Session</button>
+                <span className={classes.autors}>Maksim & Ivan</span>
               </div>
             </div>
           </div>
